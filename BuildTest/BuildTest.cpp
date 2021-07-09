@@ -1,7 +1,12 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 #include "Config.h"
+#include "VersionBuilder.h"
 #include <sstream>
+#include <fstream>
+#include <stdio.h>
+#include <string>
+#include <vector>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -82,4 +87,60 @@ namespace BuildTest
 			Assert::AreEqual(L"Syntax", ss.str().substr(0, 6).c_str());
 		}
 	};
+
+	TEST_CLASS(VersionLoaderTest) {
+		static wstring inifile;
+		static wstring outfile;
+	public:
+		TEST_CLASS_INITIALIZE(classSetup) {
+			wchar_t* tmp = _wtempnam(L".", L"ini");
+			inifile = tmp;
+			free(tmp);
+			std::wofstream ini(inifile);
+			ini << L"; top comment\n[fixed]  ; section name comment\n; line comment\nFOO=bar biz baz\n";
+			ini << L"filetype = VFT_APP\n\n" << L"[neutral]\nProductname=ess app\n";
+			ini << L"[français]\nTranslation= 0x040c, 0x4e4\nproductName = application ess     \n";
+		}
+		TEST_CLASS_CLEANUP(classTearOff) {
+			_wremove(inifile.c_str());
+		}
+		TEST_METHOD(LocalSectionsTest) {
+			VersionBuilder builder(inifile, outfile);
+			vector<VersionBuilder::localized> sections = builder.getLocalSections();
+			Assert::AreEqual(2u, sections.size());
+		}
+		TEST_METHOD(LoadSectionTest) {
+			VersionBuilder builder(inifile, outfile);
+			VersionBuilder::localized loc;
+			builder.loadSection(L"neutral", loc);
+			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
+				if (VersionBuilder::fieldnames[i] == L"ProductName") {
+					Assert::AreEqual(L"ess app", loc.as_array[i]->c_str());
+				}
+				else {
+					Assert::AreEqual(0u, loc.as_array[i]->size());
+				}
+			}
+		}
+		TEST_METHOD(LoadSection2Test) {
+			VersionBuilder builder(inifile, outfile);
+			VersionBuilder::localized loc;
+			builder.loadSection(L"français", loc);
+			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
+				if (VersionBuilder::fieldnames[i] == L"ProductName") {
+					Assert::AreEqual(L"application ess", loc.as_array[i]->c_str());
+				}
+				else {
+					Assert::AreEqual(0u, loc.as_array[i]->size());
+				}
+			}
+		}
+		TEST_METHOD(getVersionTest) {
+			VersionBuilder builder(inifile, outfile);
+			wstring version = builder.readVersion();
+			Assert::IsTrue(version.size() > 1);
+		}
+	};
+	wstring VersionLoaderTest::inifile;
+	wstring VersionLoaderTest::outfile;
 }
