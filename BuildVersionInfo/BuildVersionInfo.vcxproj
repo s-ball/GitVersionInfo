@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="readversion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />

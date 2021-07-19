@@ -10,6 +10,8 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+bool find_tag(FILE* fd, wstring& tag, int& delta);
+
 namespace BuildTest
 {
 	TEST_CLASS(ConfigTest)
@@ -143,4 +145,106 @@ namespace BuildTest
 	};
 	wstring VersionLoaderTest::inifile;
 	wstring VersionLoaderTest::outfile;
+
+	TEST_CLASS(VersionParser) {
+		 FILE* file;
+	public:
+		TEST_METHOD_INITIALIZE(setup) {
+			tmpfile_s(&file);
+		}
+		TEST_METHOD_CLEANUP(cleanup) {
+			fclose(file);
+		}
+		TEST_METHOD(simpleTag) {
+			fputws(L"tag: 1.2.3\n", file);
+			fseek(file, 0, SEEK_SET);
+			wstring tag;
+			int delta;
+			Assert::IsTrue(find_tag(file, tag, delta));
+			Assert::AreEqual(L"1.2.3", tag.c_str());
+			Assert::AreEqual(0, delta);
+		}
+		TEST_METHOD(secondLine) {
+			fputws(L"master,/origin/master\n", file);
+			fputws(L"tag: 1.2.3\n", file);
+			fseek(file, 0, SEEK_SET);
+			wstring tag;
+			int delta;
+			Assert::IsTrue(find_tag(file, tag, delta));
+			Assert::AreEqual(L"1.2.3", tag.c_str());
+			Assert::AreEqual(1, delta);
+		}
+		TEST_METHOD(longLine) {
+			fputws(L"master,/origin/master\n", file);
+			fputws(L"0123456789012345678901234567890123456789", file);
+			fputws(L"0123456789012345678901234567890123456789", file);
+			fputws(L"0123456789012345678901234567890123456789", file);
+			fputws(L"0123456789012345678901234567890123456789\n", file);
+			fputws(L"tag: 1.2.3\n", file);
+			fseek(file, 0, SEEK_SET);
+			wstring tag;
+			int delta;
+			Assert::IsTrue(find_tag(file, tag, delta));
+			Assert::AreEqual(L"1.2.3", tag.c_str());
+			Assert::AreEqual(2, delta);
+		}
+		TEST_METHOD(multipleRefs) {
+			fputws(L"master, tag: 1.2.3,/origin/master\n", file);
+			fseek(file, 0, SEEK_SET);
+			wstring tag;
+			int delta;
+			Assert::IsTrue(find_tag(file, tag, delta));
+			Assert::AreEqual(L"1.2.3", tag.c_str());
+			Assert::AreEqual(0, delta);
+		}
+	};
+	TEST_CLASS(TagParser) {
+		static wstring inifile;
+		static wstring outfile;
+		std::ofstream out;
+	public:
+		TEST_CLASS_INITIALIZE(classSetup) {
+			wchar_t* tmp = _wtempnam(L".", L"ini");
+			inifile = tmp;
+			free(tmp);
+		}
+		TEST_CLASS_CLEANUP(classTearOff) {
+			_wremove(inifile.c_str());
+		}
+		TEST_METHOD_INITIALIZE(setup) {
+			out.open("git.bat");
+			out << "@ECHO OFF\n";
+		}
+		TEST_METHOD_CLEANUP(cleanup) {
+			remove("git.bat");
+		}
+		TEST_METHOD(alt_2) {
+			out << "echo abc\necho def\n";
+			out << "echo tag: foo2 5.12.3\n";
+			out.close();
+			VersionBuilder builder(inifile, outfile);
+			wstring version = builder.readVersion();
+			Assert::IsTrue(version.size() > 1);
+			Assert::AreEqual(5, (int)builder.finfo.version[0]);
+			Assert::AreEqual(12, (int)builder.finfo.version[1]);
+			Assert::AreEqual(3, (int)builder.finfo.version[2]);
+			Assert::AreEqual(2, (int)builder.finfo.version[3]);
+			Assert::AreEqual(wstring(L"foo2 5.12.3-2"), builder.finfo.str_version);
+		}
+		TEST_METHOD(normal) {
+			out << "echo abc\necho def\n";
+			out << "echo tag: foo-2.11\n";
+			out.close();
+			VersionBuilder builder(inifile, outfile);
+			wstring version = builder.readVersion();
+			Assert::IsTrue(version.size() > 1);
+			Assert::AreEqual(2, (int)builder.finfo.version[0]);
+			Assert::AreEqual(11, (int)builder.finfo.version[1]);
+			Assert::AreEqual(0, (int)builder.finfo.version[2]);
+			Assert::AreEqual(2, (int)builder.finfo.version[3]);
+			Assert::AreEqual(wstring(L"foo-2.11-2"), builder.finfo.str_version);
+		}
+	};
+	wstring TagParser::inifile;
+	wstring TagParser::outfile;
 }

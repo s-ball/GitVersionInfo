@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <regex>
 #include <Windows.h>
 
 using std::wstring;
@@ -16,8 +17,11 @@ class VersionBuilder {
 public:
 	static constexpr LPCWSTR FIXED = L"Fixed";
 	static constexpr LPCWSTR TRANSLATION = L"Translation";
+	static constexpr LPCWSTR VERSION_REGEX = L"(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?";
+	static constexpr LPCWSTR VERSION_REGEX_ALT = L"(\\d+)\\.(\\d+)\\.(\\d+)";
 	struct fixed_info {
 		uint16_t version[4];  // used for both FILEVERSION and PRODUCTVERSION
+		wstring str_version;  // extracted from git tag
 		wstring flags;        // PRIVATE_BUILD is internally handled
 		wstring fileos;
 		wstring filetype;
@@ -49,16 +53,44 @@ public:
 			L"InternalName", L"LegalCopyright", L"LegalTrademarks", L"OriginalFilename",
 			L"PrivateBuild", L"ProductName", L"ProductVersion", L"SpecialBuild"
 	};
+	fixed_info finfo;
+
 private:
 	wstring gitCmd;
-	fixed_info finfo;
 
 	// for read_string
 	wstring inifile;
+	wstring outfile;
 	int size = 128;
 	LPWSTR buffer;
+	wstring vers;
 
 public:
+/*			FILEOS 0x40004L
+			FILETYPE 0x1L
+			FILESUBTYPE 0x0L
+			BEGIN
+			BLOCK "StringFileInfo"
+			BEGIN
+			BLOCK "000004b0"
+			BEGIN
+			VALUE "CompanyName", "SBA.ORG"
+			VALUE "FileDescription", "Simple Demo"
+			VALUE "FileVersion", "1.0.0.1"
+			VALUE "InternalName", "SimpleWi.exe"
+			VALUE "LegalCopyright", "Copyright (C) 2021"
+			VALUE "OriginalFilename", "SimpleWi.exe"
+			VALUE "ProductName", "Simple Demo"
+			VALUE "ProductVersion", "1.0.0.1"
+			END
+			END
+			BLOCK "VarFileInfo"
+			BEGIN
+			VALUE "Translation", 0x0, 1200
+			END
+			END
+			*/
+
 	wstring read_string(LPCWSTR section, LPCWSTR key, LPCWSTR def) {
 		for (;;) {
 			DWORD cr = ::GetPrivateProfileString(section, key, def, buffer, size, inifile.c_str());
@@ -126,34 +158,29 @@ public:
 	bool writeFile(const wstring& outfile) {
 		std::wofstream out(outfile);
 		out << L"VS_VERSION_INFO VERSIONINFO\n";
-		out << L"FILEVERSION\t";
-		out << L"PRODUCTVERSION\t";
-		out << L"FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK\n";
-		out << L"FILEFLAGS\t" << finfo.flags;
+		out << L" FILEVERSION\t" << finfo.version[0];
+		for (int i = 1; i < 4; i++) out << L"," << finfo.version[i];
+		out << L" PRODUCTVERSION\t" << finfo.version[0];
+		for (int i = 1; i < 4; i++) out << L"," << finfo.version[i];
+		out << L" FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK\n";
+		out << L" FILEFLAGS\t" << finfo.flags;
 #ifdef DEBUG
 		out << L"|VER_DEBUG";
 #endif // DEBUG
 		out << L"\n";
-		out << L"FILEOS\t" << finfo.fileos << L'\n';
-		out << L"FILETYPE\t" << finfo.filetype << L'\n';
-		out << L"FILESUBTYPE\t" << finfo.subtype << L'\n';
+		out << L" FILEOS\t" << finfo.fileos << L'\n';
+		out << L" FILETYPE\t" << finfo.filetype << L'\n';
+		out << L" FILESUBTYPE\t" << finfo.subtype << L'\n';
+		out << L"BEGIN\n";
+		out << L"END\n";
 	}
 
-	wstring readVersion() {
-		wstring cmd = gitCmd + L" name-rev --tags --name-only HEAD";
-		FILE* out = _wpopen(cmd.c_str(), L"r");
-		wchar_t line[64];
-		wstring resul;
-		while (NULL != fgetws(line, 64, out)) {
-			resul += line;
-		}
-		fclose(out);
-		return resul;
-	}
+	wstring readVersion();
 
 	VersionBuilder(const wstring& inifile, const wstring& outfile) : inifile(inifile) {
 		buffer = new wchar_t[size];
 		gitCmd = read_string(L"git", L"command", L"git");
 		finfo.flags = read_string(FIXED, L"flags", L"0");
+		vers = read_string(L"git", L"VERSION_TEMPLATE", NULL);
 	}
 };
