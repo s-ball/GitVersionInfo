@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 #include <regex>
+#include <array>
 #include <Windows.h>
 
 using std::wstring;
@@ -29,7 +30,7 @@ public:
 	};
 	static constexpr int NFIELDS = 12;
 	struct localized {
-		DWORD Translation[2];
+		std::array<DWORD, 2> Translation;
 		wstring Comments; 	//Additional information that should be displayed for diagnostic purposes.
 		wstring CompanyName; 	// Company that produced the file ? for example, "Microsoft Corporation" or "Standard Microsystems Corporation, Inc." This string is required.
 		wstring FileDescription; 	//File description to be presented to users.This string may be displayed in a list box when the user is choosing files to install ? for example, "Keyboard Driver for AT-Style Keyboards".This string is required.
@@ -42,11 +43,7 @@ public:
 		wstring ProductName; 	//Name of the product with which the file is distributed.This string is required.
 		wstring ProductVersion; 	//Version of the product with which the file is distributed ? for example, "3.10" or "5.00.RC2".This string is required.
 		wstring SpecialBuild;
-		wstring* as_array[NFIELDS] = {
-			&Comments, &CompanyName, &FileDescription, &FileVersion,
-			&InternalName, &LegalCopyright, &LegalTrademarks, &OriginalFilename, &PrivateBuild,
-			&ProductName, &ProductVersion, &SpecialBuild
-		};
+		static wstring localized::*asarray[NFIELDS];
 	};
 	static constexpr LPCWSTR fieldnames[NFIELDS] = {
 			L"Comments", L"CompanyName", L"FileDescription", L"FileVersion",
@@ -54,6 +51,7 @@ public:
 			L"PrivateBuild", L"ProductName", L"ProductVersion", L"SpecialBuild"
 	};
 	fixed_info finfo;
+	std::vector<localized> linfo;
 
 private:
 	wstring gitCmd;
@@ -105,20 +103,20 @@ public:
 
 	vector<localized> getLocalSections() {
 		vector<localized> cr;
-		set<std::pair<DWORD, DWORD>> translations;
+		set<std::array<WORD, 2>> translations;
 		wstring sections = read_string(NULL, NULL, NULL);
 		LPCWSTR section0 = sections.c_str();
 		for (LPCWSTR section = section0; section < section0 + sections.size(); section += lstrlen(section) + 1) {
 			if (_wcsicmp(section, FIXED) != 0) {
-				std::pair<DWORD, DWORD> lang;
+				std::array<WORD, 2> lang;
 				wstring trans = read_string(section, TRANSLATION, L"0x0000, 1252");
 				std::wistringstream ss(trans);
 				wstring data;
 				size_t pos = 0;
 				if (std::getline(ss, data, L',')) {
-					lang.first = std::stoi(data, &pos, 0);
+					lang[0] = std::stoi(data, &pos, 0);
 					if ((pos > 0) && std::getline(ss, data)) {
-						lang.second = std::stoi(data, &pos, 0);
+						lang[1] = std::stoi(data, &pos, 0);
 					}
 				}
 				if ((pos > 0) && (! ss)) {
@@ -129,7 +127,7 @@ public:
 
 				if (translations.find(lang) == translations.end()) {
 					translations.insert(lang);
-					localized loc = {{lang.first, lang.second}};
+					localized loc = { {lang[0], lang[1]} };
 					cr.push_back(loadSection(section, loc));
 				}
 				else {
@@ -143,7 +141,8 @@ public:
 
 	localized & loadSection(LPCWSTR section, localized& loc) {
 		for (int i = 0; i < NFIELDS; i++) {
-			*loc.as_array[i] = read_string(section, fieldnames[i], nullptr);
+			auto x = localized::asarray[i];
+			loc.*x = read_string(section, fieldnames[i], nullptr);
 		}
 		return loc;
 	}
@@ -155,29 +154,53 @@ public:
 		finfo.subtype = read_string(FIXED, L"subtype", L"VFT2_UNKNOWN");
 	}
 
-	bool writeFile(const wstring& outfile) {
+	bool writeFile() {
 		std::wofstream out(outfile);
 		out << L"VS_VERSION_INFO VERSIONINFO\n";
 		out << L" FILEVERSION\t" << finfo.version[0];
 		for (int i = 1; i < 4; i++) out << L"," << finfo.version[i];
-		out << L" PRODUCTVERSION\t" << finfo.version[0];
-		for (int i = 1; i < 4; i++) out << L"," << finfo.version[i];
-		out << L" FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK\n";
+		out << L"\n PRODUCTVERSION\t";
+		WORD productVersion[4] = { 0 };
+		if (getProductVersion(productVersion)) {
+			out << productVersion[0];
+			for (int i = 1; i < 4; i++) out << L"," << productVersion[i];
+		}
+		else {
+			out << finfo.version[0];
+			for (int i = 1; i < 4; i++) out << L"," << finfo.version[i];
+		}
+		out << L"\n FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK\n";
 		out << L" FILEFLAGS\t" << finfo.flags;
-#ifdef DEBUG
+#ifdef _DEBUG
 		out << L"|VER_DEBUG";
-#endif // DEBUG
+#endif // _DEBUG
 		out << L"\n";
 		out << L" FILEOS\t" << finfo.fileos << L'\n';
 		out << L" FILETYPE\t" << finfo.filetype << L'\n';
 		out << L" FILESUBTYPE\t" << finfo.subtype << L'\n';
 		out << L"BEGIN\n";
+		for (localized loc : linfo) {
+			;
+		}
 		out << L"END\n";
+		return (out) ? true : false;
 	}
 
 	wstring readVersion();
+	bool parseVersion(const wstring& strversion, WORD version[4]);
 
-	VersionBuilder(const wstring& inifile, const wstring& outfile) : inifile(inifile) {
+	bool getProductVersion(WORD version[4]) {
+		for (const localized& loc : linfo) {
+			if (!loc.ProductVersion.empty()) {
+				if (parseVersion(loc.ProductVersion, version)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	VersionBuilder(const wstring& inifile, const wstring& outfile) : inifile(inifile), outfile(outfile) {
 		buffer = new wchar_t[size];
 		gitCmd = read_string(L"git", L"command", L"git");
 		finfo.flags = read_string(FIXED, L"flags", L"0");

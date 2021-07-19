@@ -116,11 +116,13 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"neutral", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
+				auto x = VersionBuilder::localized::asarray[i];
+				std::wcout << loc.*x;
 				if (VersionBuilder::fieldnames[i] == L"ProductName") {
-					Assert::AreEqual(L"ess app", loc.as_array[i]->c_str());
+					Assert::AreEqual(L"ess app", (loc.*x).c_str());
 				}
 				else {
-					Assert::AreEqual(0u, loc.as_array[i]->size());
+					Assert::AreEqual(0u, (loc.*x).size());
 				}
 			}
 		}
@@ -129,11 +131,12 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"français", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
+				auto x = VersionBuilder::localized::asarray[i];
 				if (VersionBuilder::fieldnames[i] == L"ProductName") {
-					Assert::AreEqual(L"application ess", loc.as_array[i]->c_str());
+					Assert::AreEqual(L"application ess", (loc.*x).c_str());
 				}
 				else {
-					Assert::AreEqual(0u, loc.as_array[i]->size());
+					Assert::AreEqual(0u, (loc.*x).size());
 				}
 			}
 		}
@@ -247,4 +250,44 @@ namespace BuildTest
 	};
 	wstring TagParser::inifile;
 	wstring TagParser::outfile;
+
+	TEST_CLASS(Writer) {
+		static wstring inifile;
+		static wstring outfile;
+
+		TEST_CLASS_INITIALIZE(classSetup) {
+			wchar_t* tmp = _wtempnam(L".", L"out");
+			outfile = tmp;
+			free(tmp);
+		}
+		TEST_CLASS_CLEANUP(classTearOff) {
+			// _wremove(outfile.c_str());
+		}
+		TEST_METHOD(FixedNoProduct) {
+			VersionBuilder builder(inifile, outfile);
+			builder.finfo = { {1,2,3,4}, L"Release 1.2.3.4", L"0", L"VOS__WINDOWS32", L"VFT_APP", L"VFT2_UNKNOWN" };
+			Assert::IsTrue(builder.writeFile());
+			std::ifstream file(outfile);
+			std::string line;
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::AreEqual(" PRODUCTVERSION\t1,2,3,4", line.c_str());
+		}
+		TEST_METHOD(SingleLocalProduct) {
+			VersionBuilder builder(inifile, outfile);
+			builder.finfo = { {1,2,3,4}, L"Release 1.2.3.4", L"0", L"VOS__WINDOWS32", L"VFT_APP", L"VFT2_UNKNOWN" };
+			builder.linfo = { {0,1252} };
+			builder.linfo[0].ProductVersion = L"Test 5.4";
+			Assert::IsTrue(builder.writeFile());
+			std::ifstream file(outfile);
+			std::string line;
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::IsTrue(static_cast<bool>(std::getline(file, line)));
+			Assert::AreEqual(" PRODUCTVERSION\t5,4,0,0", line.c_str());
+		}
+	};
+	wstring Writer::inifile;
+	wstring Writer::outfile;
 }

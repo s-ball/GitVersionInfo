@@ -23,6 +23,9 @@
     <Text Include="LICENSE.txt">
       <Filter>Fichiers sources</Filter>
     </Text>
+    <Text Include="version.ini">
+      <Filter>Fichiers sources</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

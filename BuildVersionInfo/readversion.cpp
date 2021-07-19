@@ -3,6 +3,13 @@
 #include <regex>
 #include <cstdio>
 
+
+wstring VersionBuilder::localized::* VersionBuilder::localized::asarray[VersionBuilder::NFIELDS] = {
+		&VersionBuilder::localized::Comments, & VersionBuilder::localized::CompanyName, & VersionBuilder::localized::FileDescription, & VersionBuilder::localized::FileVersion,
+		& VersionBuilder::localized::InternalName, & VersionBuilder::localized::LegalCopyright, & VersionBuilder::localized::LegalTrademarks, & VersionBuilder::localized::OriginalFilename, & VersionBuilder::localized::PrivateBuild,
+		& VersionBuilder::localized::ProductName, & VersionBuilder::localized::ProductVersion, & VersionBuilder::localized::SpecialBuild
+};
+
 bool find_tag(FILE* fd, wstring& tag, int &delta) {
 	static std::wregex find_tag(L"tag: ([^,\r\n]+)");
 	wchar_t line[64];
@@ -38,20 +45,26 @@ bool extract_version(const wstring& tag, LPCWSTR rxstring, WORD version[4]) {
 	}
 	return false;
 }
+
+bool VersionBuilder::parseVersion(const wstring& tag, WORD version[4]) {
+	if (vers.empty()) {
+		if (!extract_version(tag, this->VERSION_REGEX_ALT, version)) {
+			return extract_version(tag, VERSION_REGEX, version);
+		}
+	}
+	else {
+		return extract_version(tag, vers.c_str(), version);
+	}
+	return false;
+}
+
 wstring VersionBuilder::readVersion() {
 	wstring cmd = gitCmd + L" log --format=\"%D\"";
 	FILE* out = _wpopen(cmd.c_str(), L"r");
 	wstring tag;
 	int delta;
 	if (::find_tag(out, tag, delta)) {
-		if (vers.empty()) {
-			if (!extract_version(tag, this->VERSION_REGEX_ALT, finfo.version)) {
-				extract_version(tag, VERSION_REGEX, finfo.version);
-			}
-		}
-		else {
-			extract_version(tag, vers.c_str(), finfo.version);
-		}
+		parseVersion(tag, finfo.version);
 		finfo.version[3] = delta;
 		finfo.str_version = tag;
 		if (delta != 0) {
