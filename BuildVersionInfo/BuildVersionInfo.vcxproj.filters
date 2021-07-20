@@ -18,12 +18,12 @@
     <None Include="README.md">
       <Filter>Fichiers sources</Filter>
     </None>
+    <None Include="versioninfo.rc2">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt">
-      <Filter>Fichiers sources</Filter>
-    </Text>
-    <Text Include="version.ini">
       <Filter>Fichiers sources</Filter>
     </Text>
   </ItemGroup>
@@ -48,5 +48,18 @@
     <ClInclude Include="resource1.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="resource2.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="version.ini">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

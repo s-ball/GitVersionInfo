@@ -20,24 +20,24 @@ namespace BuildTest
 		
 		TEST_METHOD(TestSlashI)
 		{
-			wchar_t* args[] = { L"progname", L"/I=foo", nullptr };
-			Config conf(2, args);
+			wchar_t* args[] = { L"progname", L"/I=foo", L"bar", nullptr};
+			Config conf(3, args);
 			Assert::AreEqual(L"foo", conf.inifile.c_str());
 			Assert::AreEqual(L"versioninfo.rc2", conf.outfile.c_str());
 			Assert::AreEqual<int>(Config::run, conf.cr);
 		}
 		TEST_METHOD(TestSlashO)
 		{
-			wchar_t* args[] = { L"progname", L"/O=foo", nullptr };
-			Config conf(2, args);
+			wchar_t* args[] = { L"progname", L"bar", L"/O=foo", nullptr};
+			Config conf(3, args);
 			Assert::AreEqual(L"version.ini", conf.inifile.c_str());
 			Assert::AreEqual(L"foo", conf.outfile.c_str());
 			Assert::AreEqual<int>(Config::run, conf.cr);
 		}
 		TEST_METHOD(TestO)
 		{
-			wchar_t* args[] = { L"progname", L"foo", nullptr };
-			Config conf(2, args);
+			wchar_t* args[] = { L"progname", L"bar", L"foo", nullptr};
+			Config conf(3, args);
 			Assert::AreEqual(L"version.ini", conf.inifile.c_str());
 			Assert::AreEqual(L"foo", conf.outfile.c_str());
 			Assert::AreEqual<int>(Config::run, conf.cr);
@@ -45,8 +45,8 @@ namespace BuildTest
 
 		TEST_METHOD(TestSplit)
 		{
-			wchar_t* args[] = { L"progname", L"/I", L"=",  L"foo", nullptr };
-			Config conf(4, args);
+			wchar_t* args[] = { L"progname", L"/I", L"=",  L"foo", L"bar",  nullptr };
+			Config conf(5, args);
 			Assert::AreEqual(L"foo", conf.inifile.c_str());
 			Assert::AreEqual(L"versioninfo.rc2", conf.outfile.c_str());
 			Assert::AreEqual<int>(Config::run, conf.cr);
@@ -61,29 +61,30 @@ namespace BuildTest
 			std::wcout.rdbuf(old);
 			Assert::AreEqual(L"version.ini", conf.inifile.c_str());
 			Assert::AreEqual(L"versioninfo.rc2", conf.outfile.c_str());
+			Assert::AreEqual(L"", conf.app_file_name.c_str());
 			Assert::AreEqual<int>(Config::help, conf.cr);
 			Assert::AreEqual(L"Usage", ss.str().substr(0, 5).c_str());
 		}
 		TEST_METHOD(TestSlashX)
 		{
-			wchar_t* args[] = { L"progname", L"/X", nullptr };
+			wchar_t* args[] = { L"progname", L"bar", L"/X", nullptr};
 			std::wstringstream ss;
 			std::wstreambuf* old = std::wcerr.rdbuf();
 			std::wcerr.rdbuf(ss.rdbuf());
-			Config conf(2, args);
+			Config conf(3, args);
 			std::wcerr.rdbuf(old);
 			Assert::AreEqual(L"version.ini", conf.inifile.c_str());
 			Assert::AreEqual(L"versioninfo.rc2", conf.outfile.c_str());
 			Assert::AreEqual<int>(Config::error, conf.cr);
 			Assert::AreEqual(L"Syntax", ss.str().substr(0, 6).c_str());
 		}
-		TEST_METHOD(Test3args)
+		TEST_METHOD(Test4args)
 		{
-			wchar_t* args[] = { L"progname", L"foo", L"bar", L"extra", nullptr};
+			wchar_t* args[] = { L"progname", L"app", L"foo", L"bar", L"extra", nullptr};
 			std::wstringstream ss;
 			std::wstreambuf* old = std::wcerr.rdbuf();
 			std::wcerr.rdbuf(ss.rdbuf());
-			Config conf(2, args);
+			Config conf(5, args);
 			std::wcerr.rdbuf(old);
 			Assert::AreEqual<int>(Config::error, conf.cr);
 			Assert::AreEqual(L"Syntax", ss.str().substr(0, 6).c_str());
@@ -116,7 +117,7 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"neutral", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
-				auto x = VersionBuilder::localized::asarray[i];
+				auto x = VersionBuilder::localized::as_array[i];
 				std::wcout << loc.*x;
 				if (VersionBuilder::fieldnames[i] == L"ProductName") {
 					Assert::AreEqual(L"ess app", (loc.*x).c_str());
@@ -131,7 +132,7 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"français", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
-				auto x = VersionBuilder::localized::asarray[i];
+				auto x = VersionBuilder::localized::as_array[i];
 				if (VersionBuilder::fieldnames[i] == L"ProductName") {
 					Assert::AreEqual(L"application ess", (loc.*x).c_str());
 				}
@@ -250,6 +251,18 @@ namespace BuildTest
 	};
 	wstring TagParser::inifile;
 	wstring TagParser::outfile;
+
+	TEST_CLASS(localizer_test) {
+		TEST_METHOD(simple_init) {
+			VersionBuilder::localized loc{ {0, 1252}, L"foo"};
+			Assert::AreEqual(L"foo", (loc.*(VersionBuilder::localized::as_array[0])).c_str());
+		}
+		TEST_METHOD(init_move) {
+			VersionBuilder::localized loc;
+			loc = { {0, 1252}, L"foo" };
+			Assert::AreEqual(L"foo", (loc.*(VersionBuilder::localized::as_array[0])).c_str());
+		}
+	};
 
 	TEST_CLASS(Writer) {
 		static wstring inifile;

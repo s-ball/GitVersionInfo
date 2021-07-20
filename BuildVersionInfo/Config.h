@@ -12,6 +12,7 @@ public:
 	wstring prog;
 	wstring inifile;
 	wstring outfile;
+	wstring app_file_name;
 	enum {
 		error = -1,
 		help = 0,
@@ -36,7 +37,7 @@ private:
 		}
 		out << L"Usage:\n\t" << prog << L" /H\n";
 		out << L"\t\tdisplays this help message\n";
-		out << L"\t" << prog << L" [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
+		out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
 		out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
 	}
 	wstring getfile(wchar_t**& arg) {
@@ -81,10 +82,14 @@ private:
 			else {
 				switch (pos) {
 				case 0:
-					outfile = *arg;
+					app_file_name = *arg;
 					pos += 1;
 					break;
 				case 1:
+					outfile = *arg;
+					pos += 1;
+					break;
+				case 2:
 					inifile = *arg;
 					pos += 1;
 					break;
@@ -94,6 +99,6 @@ private:
 				}
 			}
 		}
-		cr = run;
+		cr = (app_file_name == L"") ? error : run;
 	}
 };

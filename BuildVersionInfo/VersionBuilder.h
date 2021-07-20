@@ -8,11 +8,16 @@
 #include <fstream>
 #include <regex>
 #include <array>
+#include <iomanip>
 #include <Windows.h>
 
 using std::wstring;
 using std::vector;
 using std::set;
+using std::hex;
+using std::dec;
+using std::setw;
+using std::setfill;
 
 class VersionBuilder {
 public:
@@ -43,7 +48,7 @@ public:
 		wstring ProductName; 	//Name of the product with which the file is distributed.This string is required.
 		wstring ProductVersion; 	//Version of the product with which the file is distributed ? for example, "3.10" or "5.00.RC2".This string is required.
 		wstring SpecialBuild;
-		static wstring localized::*asarray[NFIELDS];
+		static wstring localized::*as_array[NFIELDS];
 	};
 	static constexpr LPCWSTR fieldnames[NFIELDS] = {
 			L"Comments", L"CompanyName", L"FileDescription", L"FileVersion",
@@ -59,6 +64,7 @@ private:
 	// for read_string
 	wstring inifile;
 	wstring outfile;
+	wstring appfile;
 	int size = 128;
 	LPWSTR buffer;
 	wstring vers;
@@ -109,7 +115,7 @@ public:
 		for (LPCWSTR section = section0; section < section0 + sections.size(); section += lstrlen(section) + 1) {
 			if (_wcsicmp(section, FIXED) != 0) {
 				std::array<WORD, 2> lang;
-				wstring trans = read_string(section, TRANSLATION, L"0x0000, 1252");
+				wstring trans = read_string(section, TRANSLATION, L"0x0000, 1200");
 				std::wistringstream ss(trans);
 				wstring data;
 				size_t pos = 0;
@@ -136,12 +142,13 @@ public:
 				}
 			}
 		}
+		linfo = cr;
 		return cr;
 	}
 
 	localized & loadSection(LPCWSTR section, localized& loc) {
 		for (int i = 0; i < NFIELDS; i++) {
-			auto x = localized::asarray[i];
+			auto x = localized::as_array[i];
 			loc.*x = read_string(section, fieldnames[i], nullptr);
 		}
 		return loc;
@@ -172,17 +179,66 @@ public:
 		out << L"\n FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK\n";
 		out << L" FILEFLAGS\t" << finfo.flags;
 #ifdef _DEBUG
-		out << L"|VER_DEBUG";
+		out << L"|VS_FF_DEBUG";
 #endif // _DEBUG
 		out << L"\n";
 		out << L" FILEOS\t" << finfo.fileos << L'\n';
 		out << L" FILETYPE\t" << finfo.filetype << L'\n';
 		out << L" FILESUBTYPE\t" << finfo.subtype << L'\n';
-		out << L"BEGIN\n";
+		out << L"BEGIN\n    BLOCK \"StringFileInfo\"\n    BEGIN\n";
+		size_t ext = appfile.rfind(L'.');
+		wstring appname = appfile.substr(0, ext);
+		static const wchar_t B8[] = L"        ";
+		static const wchar_t B12[] = L"            ";
 		for (localized loc : linfo) {
-			;
+			out << B8 << L"BLOCK \"" << hex << setw(4) << setfill(L'0') << loc.Translation[0];
+			out << hex << setw(4) << setfill(L'0') << loc.Translation[1] << L"\"\n";
+			out << B8 << L"BEGIN\n";
+			if (!loc.Comments.empty()) {
+				out << B12 << L"VALUE \"" << fieldnames[0] << L"\", \"";
+				out << loc.Comments << L"\"\n";
+			}
+			// Required identifiers:
+			out << B12 << L"VALUE \"" << fieldnames[1] << L"\", \"";
+			out << (loc.CompanyName.empty() ? L"unknown" : loc.CompanyName) << L"\"\n";
+			out << B12 << L"VALUE \"" << fieldnames[2] << L"\", \"";
+			out << (loc.FileDescription.empty() ? appname : loc.FileDescription) << L"\"\n";
+			out << B12 << L"VALUE \"" << fieldnames[3] << L"\", \"";
+			out << finfo.version[0];
+			for (int i = 1; i < 4; i++) out << L'.' << finfo.version[i];
+			out << L"\"\n";
+			out << B12 << L"VALUE \"" << fieldnames[4] << L"\", \"";
+			out << (loc.InternalName.empty() ? appname : loc.InternalName) << L"\"\n";
+			if (!loc.LegalCopyright.empty()) {
+				out << B12 << L"VALUE \"" << fieldnames[5] << L"\", \"";
+				out << loc.LegalCopyright << L"\"\n";
+			}
+			if (!loc.LegalTrademarks.empty()) {
+				out << B12 << L"VALUE \"" << fieldnames[6] << L"\", \"";
+				out << loc.LegalTrademarks << L"\"\n";
+			}
+			out << B12 << L"VALUE \"" << fieldnames[7] << L"\", \"";
+			out << (loc.OriginalFilename.empty() ? appfile : loc.OriginalFilename) << L"\"\n";
+			out << B12 << L"VALUE \"" << fieldnames[9] << L"\", \"";
+			out << (loc.ProductName.empty() ? appname : loc.ProductName) << L"\"\n";
+			out << B12 << L"VALUE \"" << fieldnames[10] << L"\", \"";
+			if (loc.ProductVersion.empty()) {
+				out << finfo.version[0];
+				for (int i = 1; i < 4; i++) out << L'.' << finfo.version[i];
+			}
+			else {
+				out << loc.ProductVersion << L"\"\n";
+			}
+			out << L"\"\n";
+			out << B8 << L"END\n";
 		}
-		out << L"END\n";
+		out << L"    END\n    BLOCK \"VarFileInfo\"\n    BEGIN\n";
+		out << B8 << L"VALUE \"Translation\"";
+		for (localized loc : linfo) {
+			out << L", 0x" << hex << loc.Translation[0];
+			out << L", " << dec << loc.Translation[1];
+		}
+		out << L"\n    END\nEND\n";
 		return (out) ? true : false;
 	}
 
@@ -200,7 +256,7 @@ public:
 		return false;
 	}
 
-	VersionBuilder(const wstring& inifile, const wstring& outfile) : inifile(inifile), outfile(outfile) {
+	VersionBuilder(const wstring& inifile, const wstring& outfile, const wstring& appfile = L"app") : inifile(inifile), outfile(outfile), appfile(appfile) {
 		buffer = new wchar_t[size];
 		gitCmd = read_string(L"git", L"command", L"git");
 		finfo.flags = read_string(FIXED, L"flags", L"0");

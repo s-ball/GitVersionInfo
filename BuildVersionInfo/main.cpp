@@ -10,7 +10,8 @@ int wmain(int argc, wchar_t* argv[]) {
 	if (conf.cr == Config::error) {
 		return EXIT_FAILURE;
 	}
-	VersionBuilder builder(conf.inifile, conf.outfile);
+	VersionBuilder builder(conf.inifile, conf.outfile, conf.app_file_name);
+	builder.readVersion();
 	builder.loadFixedInfo();
 	builder.getLocalSections();
 	builder.writeFile();

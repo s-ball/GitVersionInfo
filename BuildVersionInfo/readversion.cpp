@@ -4,7 +4,7 @@
 #include <cstdio>
 
 
-wstring VersionBuilder::localized::* VersionBuilder::localized::asarray[VersionBuilder::NFIELDS] = {
+wstring VersionBuilder::localized::* VersionBuilder::localized::as_array[VersionBuilder::NFIELDS] = {
 		&VersionBuilder::localized::Comments, & VersionBuilder::localized::CompanyName, & VersionBuilder::localized::FileDescription, & VersionBuilder::localized::FileVersion,
 		& VersionBuilder::localized::InternalName, & VersionBuilder::localized::LegalCopyright, & VersionBuilder::localized::LegalTrademarks, & VersionBuilder::localized::OriginalFilename, & VersionBuilder::localized::PrivateBuild,
 		& VersionBuilder::localized::ProductName, & VersionBuilder::localized::ProductVersion, & VersionBuilder::localized::SpecialBuild
