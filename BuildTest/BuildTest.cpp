@@ -117,9 +117,9 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"neutral", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
-				auto x = VersionBuilder::localized::as_array[i];
+				auto x = builder.as_array[i];
 				std::wcout << loc.*x;
-				if (VersionBuilder::fieldnames[i] == L"ProductName") {
+				if (builder.field_desc[i].name == L"ProductName") {
 					Assert::AreEqual(L"ess app", (loc.*x).c_str());
 				}
 				else {
@@ -132,8 +132,8 @@ namespace BuildTest
 			VersionBuilder::localized loc;
 			builder.loadSection(L"français", loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
-				auto x = VersionBuilder::localized::as_array[i];
-				if (VersionBuilder::fieldnames[i] == L"ProductName") {
+				auto x = builder.as_array[i];
+				if (builder.field_desc[i].name == L"ProductName") {
 					Assert::AreEqual(L"application ess", (loc.*x).c_str());
 				}
 				else {
@@ -253,14 +253,15 @@ namespace BuildTest
 	wstring TagParser::outfile;
 
 	TEST_CLASS(localizer_test) {
+		VersionBuilder builder{ L"", L"" };
 		TEST_METHOD(simple_init) {
 			VersionBuilder::localized loc{ {0, 1252}, L"foo"};
-			Assert::AreEqual(L"foo", (loc.*(VersionBuilder::localized::as_array[0])).c_str());
+			Assert::AreEqual(L"foo", (loc.*(builder.as_array[0])).c_str());
 		}
 		TEST_METHOD(init_move) {
 			VersionBuilder::localized loc;
 			loc = { {0, 1252}, L"foo" };
-			Assert::AreEqual(L"foo", (loc.*(VersionBuilder::localized::as_array[0])).c_str());
+			Assert::AreEqual(L"foo", (loc.*(builder.as_array[0])).c_str());
 		}
 	};
 

@@ -21,6 +21,9 @@
     <None Include="versioninfo.rc2">
       <Filter>Fichiers de ressources</Filter>
     </None>
+    <None Include="build_rc2.bat">
+      <Filter>Fichiers sources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt">

@@ -3,13 +3,6 @@
 #include <regex>
 #include <cstdio>
 
-
-wstring VersionBuilder::localized::* VersionBuilder::localized::as_array[VersionBuilder::NFIELDS] = {
-		&VersionBuilder::localized::Comments, & VersionBuilder::localized::CompanyName, & VersionBuilder::localized::FileDescription, & VersionBuilder::localized::FileVersion,
-		& VersionBuilder::localized::InternalName, & VersionBuilder::localized::LegalCopyright, & VersionBuilder::localized::LegalTrademarks, & VersionBuilder::localized::OriginalFilename, & VersionBuilder::localized::PrivateBuild,
-		& VersionBuilder::localized::ProductName, & VersionBuilder::localized::ProductVersion, & VersionBuilder::localized::SpecialBuild
-};
-
 bool find_tag(FILE* fd, wstring& tag, int &delta) {
 	static std::wregex find_tag(L"tag: ([^,\r\n]+)");
 	wchar_t line[64];
@@ -59,11 +52,23 @@ bool VersionBuilder::parseVersion(const wstring& tag, WORD version[4]) {
 }
 
 wstring VersionBuilder::readVersion() {
-	wstring cmd = gitCmd + L" log --format=\"%D\"";
-	FILE* out = _wpopen(cmd.c_str(), L"r");
+	// scan git log to find last tag
+	// scan git status to set the dirty flag
+	dirty = false;
+	wstring cmd = gitCmd + L" status --porcelain";
+	FILE *out = _wpopen(cmd.c_str(), L"r");
+	while (NULL != fgetws(buffer, size, out)) {
+		if ((buffer[0] != L'?' && buffer[0] != L' ') || (buffer[1] != L'?' && buffer[1] != L' ')) {
+			dirty = true;
+			break;
+		}
+	}
+	cmd = gitCmd + L" log --format=\"%D\"";
+	out = _wpopen(cmd.c_str(), L"r");
 	wstring tag;
 	int delta;
 	if (::find_tag(out, tag, delta)) {
+		if (dirty) delta += 1;
 		parseVersion(tag, finfo.version);
 		finfo.version[3] = delta;
 		finfo.str_version = tag;

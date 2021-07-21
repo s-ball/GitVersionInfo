@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="build_rc2.bat" />
     <None Include="README.md" />
     <None Include="versioninfo.rc2" />
     <CustomBuild Include="version.ini">
@@ -155,10 +156,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetPath) $(TargetFileName) /I:$(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetPath) $(TargetFileName) /I:$(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(TargetPath) $(TargetFileName) /I:$(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(TargetPath) $(TargetFileName) /I:$(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)build_rc2 $(TargetPath) $(TargetFileName) $(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)build_rc2 $(TargetPath) $(TargetFileName) $(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)build_rc2 $(TargetPath) $(TargetFileName) $(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)build_rc2 $(TargetPath) $(TargetFileName) $(ProjectDir)%(Identity) $(ProjectDir)versioninfo.rc2</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)versioninfo.rc2;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)versioninfo.rc2;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)versioninfo.rc2;%(Outputs)</Outputs>
