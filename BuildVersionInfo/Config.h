@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <Windows.h>
 
 using std::wstring;
 
@@ -10,6 +11,7 @@ class Config {
 	static constexpr wchar_t def_outfile[] = L"versioninfo.rc2";
 public:
 	wstring prog;
+	wstring file;
 	wstring inifile;
 	wstring outfile;
 	wstring app_file_name;
@@ -24,6 +26,7 @@ public:
 		switch (cr) {
 		case error:
 			usage(std::wcerr);
+		case run:
 			break;
 		case help:
 			usage(std::wcout);
@@ -34,6 +37,25 @@ private:
 	void usage(std::wostream& out) {
 		if (&out == &std::wcerr) {
 			out << L"Syntax error\n";
+		}
+		else {
+			DWORD sz,handle;
+			if (0 != (sz = GetFileVersionInfoSize(file.c_str(), &handle))) {
+				LPVOID data = static_cast<LPVOID>(new char[sz]);
+				GetFileVersionInfo(file.c_str(), 0, sz, data);
+				UINT len;
+				LPCWSTR buf;
+				VerQueryValue(data, L"\\StringFileInfo\\000004b0\\FileDescription", (LPVOID*)&buf, &len);
+				out << buf;
+				VerQueryValue(data, L"\\StringFileInfo\\000004b0\\FileVersion", (LPVOID*)&buf, &len);
+				out << L" " << buf << L'\n';
+				delete[] static_cast<char*>(data);
+			}
+			else {
+				LPCWSTR buf;
+				::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, ::GetLastError(), LANG_NEUTRAL, (LPWSTR)&buf, 0, nullptr);
+				out << buf << '\n';
+			}
 		}
 		out << L"Usage:\n\t" << prog << L" /H\n";
 		out << L"\t\tdisplays this help message\n";
@@ -56,10 +78,10 @@ private:
 		return start;
 	}
 	void parse(int argc, wchar_t* argv[]) {
-		prog = argv[0];
+		file = argv[0];
 		size_t pos;
-		if ((pos = prog.rfind('\\')) != prog.npos) {
-			prog = prog.substr(pos + 1);
+		if ((pos = file.rfind('\\')) != file.npos) {
+			prog = file.substr(pos + 1);
 		}
 		pos = 0;
 		for (wchar_t** arg = argv + 1; *arg != nullptr; arg++) {
