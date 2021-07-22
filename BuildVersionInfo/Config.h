@@ -66,6 +66,7 @@ private:
 			if (**arg == L'/') {
 				switch (towupper((*arg)[1])) {
 				case L'H':
+				case L'?':
 					cr = help;
 					return;
 				case L'I':
