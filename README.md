@@ -80,6 +80,17 @@ be increased and the `VS_FF_PRERELEASE` flag will be added to `FILEFLAGS`.
 The `FileVersion` in all `StringFileInfo` blocs will be the tag name with
 `-delta` added where delta is the 4th element of the FILEVERSION.
 
+### StringFileInfo processing
+
+The first section in the ini file is special: its fields will be used for
+default values in all other sections. And if another section contains a
+field that was not present in the first section, it will be added there
+too.
+
+Finally if any section contains a `SpecialBuild` (resp. `PrivateBuild`)
+field (nota: it will be also present in the first StringFileInfo bloc...)
+then the corresponding flag is added to `FILEFLAGS` in the fixed info bloc.
+
 ## Installation
 
 ### To develop on BuildVersionInfo using VisualStudio 2019

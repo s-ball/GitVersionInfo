@@ -354,4 +354,49 @@ namespace BuildTest
 	};
 	wstring Writer::inifile;
 	wstring Writer::outfile;
+
+	TEST_CLASS(dumpTest) {
+		TEST_METHOD(present) {
+			VersionBuilder builder{ L"", L"" };
+			std::wstringstream ss;
+			builder.linfo = { {0,1252} };
+			VersionBuilder::localized& loc = builder.linfo[0];
+			loc.Comments = L"foo";
+			builder.dumpField(ss, loc, 0);
+			Assert::IsTrue(ss.good());
+			std::wregex rx(L"\\s*VALUE\\s*\"Comments\"\\s*,\\s*\"foo\"\\s*\n$");
+			Assert::IsTrue(std::regex_match(ss.str(), rx));
+		}
+		TEST_METHOD(not_required) {
+			VersionBuilder builder{ L"", L"" };
+			std::wstringstream ss;
+			builder.linfo = { {0,1252} };
+			VersionBuilder::localized& loc = builder.linfo[0];
+			builder.dumpField(ss, loc, 0);
+			Assert::IsTrue(ss.good());
+			Assert::IsTrue(ss.str().empty());
+		}
+		TEST_METHOD(in_loc_0) {
+			VersionBuilder builder{ L"", L"" };
+			std::wstringstream ss;
+			builder.linfo = { {0,1252} };
+			builder.linfo[0].Comments = L"foo";
+			builder.linfo.push_back(VersionBuilder::localized{ 0x409, 1200 });
+			VersionBuilder::localized& loc = builder.linfo[1];
+			builder.dumpField(ss, loc, 0);
+			Assert::IsTrue(ss.good());
+			std::wregex rx(L"\\s*VALUE\\s*\"Comments\"\\s*,\\s*\"foo\"\\s*\n$");
+			Assert::IsTrue(std::regex_match(ss.str(), rx));
+		}
+		TEST_METHOD(required) {
+			VersionBuilder builder(L"", L"", L"foo.exe");
+			std::wstringstream ss;
+			builder.linfo = { {0,1252} };
+			VersionBuilder::localized& loc = builder.linfo[0];
+			builder.dumpField(ss, loc, 1);
+			Assert::IsTrue(ss.good());
+			std::wregex rx(L"\\s*VALUE\\s*\"CompanyName\"\\s*,\\s*\"foo\"\\s*\n$");
+			Assert::IsTrue(std::regex_match(ss.str(), rx));
+		}
+	};
 }

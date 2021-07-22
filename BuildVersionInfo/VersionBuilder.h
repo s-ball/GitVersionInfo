@@ -220,7 +220,7 @@ public:
 		out << L"BEGIN\n    BLOCK \"StringFileInfo\"\n    BEGIN\n";
 		static const wchar_t B8[] = L"        ";
 		static const wchar_t B12[] = L"            ";
-		for (localized loc : linfo) {
+		for (localized& loc : linfo) {
 			out << B8 << L"BLOCK \"" << hex << setw(4) << setfill(L'0') << loc.Translation[0];
 			out << hex << setw(4) << setfill(L'0') << loc.Translation[1] << L"\"\n";
 			out << B8 << L"BEGIN\n";
@@ -231,7 +231,7 @@ public:
 		}
 		out << L"    END\n    BLOCK \"VarFileInfo\"\n    BEGIN\n";
 		out << B8 << L"VALUE \"Translation\"";
-		for (localized loc : linfo) {
+		for (localized& loc : linfo) {
 			out << L", 0x" << hex << loc.Translation[0];
 			out << L", " << dec << loc.Translation[1];
 		}

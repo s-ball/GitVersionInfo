@@ -140,7 +140,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="build_rc2.bat" />
-    <None Include="README.md" />
     <None Include="versioninfo.rc2" />
     <CustomBuild Include="version.ini">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
@@ -165,9 +164,6 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)versioninfo.rc2;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)versioninfo.rc2;%(Outputs)</Outputs>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
