@@ -9,6 +9,7 @@
 #include <regex>
 #include <array>
 #include <iomanip>
+#include <regex>
 #include <Windows.h>
 
 using std::wstring;
@@ -112,7 +113,7 @@ public:
 		wstring sections = read_string(NULL, NULL, NULL);
 		LPCWSTR section0 = sections.c_str();
 		for (LPCWSTR section = section0; section < section0 + sections.size(); section += lstrlen(section) + 1) {
-			if (_wcsicmp(section, FIXED) != 0) {
+			if (_wcsicmp(section, FIXED) != 0 && _wcsicmp(section, L"GIT")) {
 				std::array<WORD, 2> lang;
 				wstring trans = read_string(section, TRANSLATION, L"0x0000, 1200");
 				std::wistringstream ss(trans);
@@ -133,7 +134,8 @@ public:
 				if (translations.find(lang) == translations.end()) {
 					translations.insert(lang);
 					localized loc = { {lang[0], lang[1]} };
-					cr.push_back(loadSection(section, loc));
+					localized& loc0 = cr.empty() ? loc : cr[0];
+					cr.push_back(loadSection(section, loc, loc0));
 				}
 				else {
 					std::wcerr << L"WARNING: section " << section << " ignored: duplicated translation >";
@@ -142,13 +144,29 @@ public:
 			}
 		}
 		linfo = cr;
+		if (!linfo.empty()) {
+			// Special processing for PrivateBuild and SpecialBuild fields to ensure consistancy with FILEFLAGS
+			static const std::wregex priv{ L"VS_FF_PRIVATEBUILD" };
+			static const std::wregex special{ L"VS_FF_SPECIALBUILD" };
+			if (!linfo[0].PrivateBuild.empty() && !std::regex_search(finfo.flags, priv)) {
+				finfo.flags += L"|VS_FF_PRIVATEBUILD";
+			}
+			if (!linfo[0].SpecialBuild.empty() && !std::regex_search(finfo.flags, special)) {
+				finfo.flags += L"|VS_FF_SPECIALBUILD";
+			}
+		}
 		return cr;
 	}
 
-	localized & loadSection(LPCWSTR section, localized& loc) {
+	localized & loadSection(LPCWSTR section, localized& loc, localized &loc0) {
 		for (int i = 0; i < NFIELDS; i++) {
 			auto x = as_array[i];
 			loc.*x = read_string(section, field_desc[i].name, nullptr);
+			// ensure section 0 contains all fields that exists in other sections
+			if (&loc != &loc0 && !field_desc[i].required
+					&& (loc0.*x).empty() && !(loc.*x).empty()) {
+				loc0.*x = loc.*x;
+			}
 		}
 		return loc;
 	}

@@ -115,7 +115,7 @@ namespace BuildTest
 		TEST_METHOD(LoadSectionTest) {
 			VersionBuilder builder(inifile, outfile);
 			VersionBuilder::localized loc;
-			builder.loadSection(L"neutral", loc);
+			builder.loadSection(L"neutral", loc, loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
 				auto x = builder.as_array[i];
 				std::wcout << loc.*x;
@@ -130,7 +130,7 @@ namespace BuildTest
 		TEST_METHOD(LoadSection2Test) {
 			VersionBuilder builder(inifile, outfile);
 			VersionBuilder::localized loc;
-			builder.loadSection(L"français", loc);
+			builder.loadSection(L"français", loc, loc);
 			for (int i = 0; i < VersionBuilder::NFIELDS; i++) {
 				auto x = builder.as_array[i];
 				if (builder.field_desc[i].name == L"ProductName") {
@@ -145,6 +145,36 @@ namespace BuildTest
 			VersionBuilder builder(inifile, outfile);
 			wstring version = builder.readVersion();
 			Assert::IsTrue(version.size() > 1);
+		}
+		TEST_METHOD(field_in_section_2) {
+			std::wofstream ini(inifile, std::ios::app);
+			ini << L"legalcopyright = bar\n";
+			ini.close();
+			VersionBuilder builder(inifile, outfile);
+			builder.getLocalSections();
+			Assert::AreEqual(L"bar", builder.linfo[0].LegalCopyright.c_str());
+		}
+		TEST_METHOD(specialBuild) {
+			std::wofstream ini(inifile, std::ios::app);
+			ini << L"specialbuild = bar\n";
+			ini.close();
+			VersionBuilder builder(inifile, outfile);
+			builder.loadFixedInfo();
+			builder.getLocalSections();
+			Assert::AreEqual(L"bar", builder.linfo[0].SpecialBuild.c_str());
+			wstring sb = L"VS_FF_SPECIALBUILD";
+			Assert::AreNotEqual(builder.finfo.flags.find(sb), builder.finfo.flags.npos);
+		}
+		TEST_METHOD(privateBuild) {
+			std::wofstream ini(inifile, std::ios::app);
+			ini << L"Privatebuild = bar\n";
+			ini.close();
+			VersionBuilder builder(inifile, outfile);
+			builder.loadFixedInfo();
+			builder.getLocalSections();
+			Assert::AreEqual(L"bar", builder.linfo[0].PrivateBuild.c_str());
+			wstring pb = L"VS_FF_PRIVATEBUILD";
+			Assert::AreNotEqual(builder.finfo.flags.find(pb), builder.finfo.flags.npos);
 		}
 	};
 	wstring VersionLoaderTest::inifile;
@@ -223,8 +253,10 @@ namespace BuildTest
 			remove("git.bat");
 		}
 		TEST_METHOD(alt_2) {
+			out << "IF \"%1\"==\"status\" GOTO end\n";
 			out << "echo abc\necho def\n";
 			out << "echo tag: foo2 5.12.3\n";
+			out << ":end";
 			out.close();
 			VersionBuilder builder(inifile, outfile);
 			wstring version = builder.readVersion();
@@ -236,8 +268,10 @@ namespace BuildTest
 			Assert::AreEqual(wstring(L"foo2 5.12.3-2"), builder.finfo.str_version);
 		}
 		TEST_METHOD(normal) {
+			out << "IF \"%1\"==\"status\" GOTO end\n";
 			out << "echo abc\necho def\n";
 			out << "echo tag: foo-2.11\n";
+			out << ":end";
 			out.close();
 			VersionBuilder builder(inifile, outfile);
 			wstring version = builder.readVersion();
@@ -247,6 +281,22 @@ namespace BuildTest
 			Assert::AreEqual(0, (int)builder.finfo.version[2]);
 			Assert::AreEqual(2, (int)builder.finfo.version[3]);
 			Assert::AreEqual(wstring(L"foo-2.11-2"), builder.finfo.str_version);
+		}
+		TEST_METHOD(dirty) {
+			out << "IF \"%1\"==\"status\" GOTO status\n";
+			out << "echo abc\necho def\n";
+			out << "echo tag: foo-2.11\n";
+			out << "GOTO end\n:status\necho M  foo.cpp\n";
+			out << ":end";
+			out.close();
+			VersionBuilder builder(inifile, outfile);
+			wstring version = builder.readVersion();
+			Assert::IsTrue(version.size() > 1);
+			Assert::AreEqual(2, (int)builder.finfo.version[0]);
+			Assert::AreEqual(11, (int)builder.finfo.version[1]);
+			Assert::AreEqual(0, (int)builder.finfo.version[2]);
+			Assert::AreEqual(3, (int)builder.finfo.version[3]);
+			Assert::AreEqual(wstring(L"foo-2.11-3"), builder.finfo.str_version);
 		}
 	};
 	wstring TagParser::inifile;
