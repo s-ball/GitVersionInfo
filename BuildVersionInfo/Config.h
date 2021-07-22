@@ -18,6 +18,7 @@ public:
 	enum {
 		error = -1,
 		help = 0,
+		version,
 		run
 	} cr;
 
@@ -26,29 +27,39 @@ public:
 		switch (cr) {
 		case error:
 			usage(std::wcerr);
-		case run:
 			break;
 		case help:
 			usage(std::wcout);
+			break;
+		case version:
+			usage(std::wcout, true);
+		case run:
+			;
 		}
 	}
 
 private:
-	void usage(std::wostream& out) {
+	void usage(std::wostream& out, bool versiononly = false) {
 		if (&out == &std::wcerr) {
 			out << L"Syntax error\n";
 		}
-		else {
-			DWORD sz,handle;
+		else if (versiononly) {
+			DWORD sz, handle;
 			if (0 != (sz = GetFileVersionInfoSize(file.c_str(), &handle))) {
+				UINT len;
 				LPVOID data = static_cast<LPVOID>(new char[sz]);
 				GetFileVersionInfo(file.c_str(), 0, sz, data);
-				UINT len;
 				LPCWSTR buf;
-				VerQueryValue(data, L"\\StringFileInfo\\000004b0\\FileDescription", (LPVOID*)&buf, &len);
+				VerQueryValue(data, L"\\StringFileInfo\\000004b0\\InternalName", (LPVOID*)&buf, &len);
 				out << buf;
 				VerQueryValue(data, L"\\StringFileInfo\\000004b0\\FileVersion", (LPVOID*)&buf, &len);
-				out << L" " << buf << L'\n';
+				out << L" " << buf;
+				VS_FIXEDFILEINFO* finfo;
+				VerQueryValue(data, L"\\", (LPVOID*)&finfo, &len);
+				if (finfo->dwFileFlags & VS_FF_PRERELEASE) {
+					out << L" (pre-release)";
+				}
+				out << L'\n';
 				delete[] static_cast<char*>(data);
 			}
 			else {
@@ -57,10 +68,12 @@ private:
 				out << buf << '\n';
 			}
 		}
-		out << L"Usage:\n\t" << prog << L" /H\n";
-		out << L"\t\tdisplays this help message\n";
-		out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
-		out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
+		else {
+			out << L"Usage:\n\t" << prog << L" /H\n";
+			out << L"\t\tdisplays this help message\n";
+			out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
+			out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
+		}
 	}
 	wstring getfile(wchar_t**& arg) {
 		wchar_t* start = (*arg) + 2;
@@ -97,6 +110,9 @@ private:
 				case L'O':
 					outfile = getfile(arg);
 					break;
+				case L'V':
+					cr = version;
+					return;
 				default:
 					cr = error;
 					return;
