@@ -110,7 +110,7 @@ namespace BuildTest
 		TEST_METHOD(LocalSectionsTest) {
 			VersionBuilder builder(inifile, outfile);
 			vector<VersionBuilder::localized> sections = builder.getLocalSections();
-			Assert::AreEqual(2u, sections.size());
+			Assert::AreEqual(static_cast<size_t>(2), sections.size());
 		}
 		TEST_METHOD(LoadSectionTest) {
 			VersionBuilder builder(inifile, outfile);
@@ -123,7 +123,7 @@ namespace BuildTest
 					Assert::AreEqual(L"ess app", (loc.*x).c_str());
 				}
 				else {
-					Assert::AreEqual(0u, (loc.*x).size());
+					Assert::AreEqual(static_cast<size_t>(0), (loc.*x).size());
 				}
 			}
 		}
@@ -137,7 +137,7 @@ namespace BuildTest
 					Assert::AreEqual(L"application ess", (loc.*x).c_str());
 				}
 				else {
-					Assert::AreEqual(0u, (loc.*x).size());
+					Assert::AreEqual(static_cast<size_t>(0), (loc.*x).size());
 				}
 			}
 		}

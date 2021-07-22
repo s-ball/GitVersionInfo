@@ -219,7 +219,6 @@ public:
 		out << L" FILESUBTYPE\t" << finfo.subtype << L'\n';
 		out << L"BEGIN\n    BLOCK \"StringFileInfo\"\n    BEGIN\n";
 		static const wchar_t B8[] = L"        ";
-		static const wchar_t B12[] = L"            ";
 		for (localized& loc : linfo) {
 			out << B8 << L"BLOCK \"" << hex << setw(4) << setfill(L'0') << loc.Translation[0];
 			out << hex << setw(4) << setfill(L'0') << loc.Translation[1] << L"\"\n";
