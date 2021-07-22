@@ -71,6 +71,8 @@ private:
 		else {
 			out << L"Usage:\n\t" << prog << L" /H\n";
 			out << L"\t\tdisplays this help message\n";
+			out << L"\t" << prog << L" /V\n";
+			out << L"\t\tdisplays the version of the program\n\n";
 			out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
 			out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
 		}

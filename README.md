@@ -21,10 +21,17 @@ be included from a standard `resource.rc` file.
 
 ### Syntax:
 
-    BuildVersionInfo executable.exe /I:version.ini /O:versioninfo.rc2
+    BuildVersionInfo.exe appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]
 
-builds a `versioninfo.rc2` file from a `version.ini` file for an application
-named `executable.exe`
+builds outfile (default versioninfo.rc2) from inifile (default version.ini)
+
+    BuildVersionInfo {/h|/?}
+
+displays a help message for the syntax of the command
+
+    BuildVersioniInfo /v
+
+displays the version of the BuildVersionInfo program
 
 ### Input file structure:
 
@@ -113,7 +120,26 @@ because if `BuildVersionInfo.exe` is not available, you get an empty
 `versioninfo.rc2`.
 
 ### To use BuildVersionInfo in other projects
-[TODO]
+
+You have to get a BuildVersionInfo.exe on your system. You can either
+download the source from GitHUB (prefere a release version, untagged
+ones may be unstable...) and build the application localy, or directly
+download a compiled version from the *packages*. Most releases should be
+published there starting with the 0.7.0 one.
+
+You must write a `version.ini` file according to the documentation above.
+and set a custom build step on it using your installed `BuildVersionInfo.exe`
+to generate a `versioninfo.rc2` file. Then open your `resource.rc` file (or
+create one with Visual Studio) and use the *Resources include* tool from the
+resource editor or resource display (right click) to add
+
+    #include "versioninfo.rc2"
+
+in the *Compilation directives* block (third one).
+
+Here again, you will have to manually compile you `version.ini` file each 
+time the `git` status change, because I could not find a way to do that
+automatically.
 
 ## Contributing
 
