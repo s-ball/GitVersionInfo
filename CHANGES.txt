@@ -1,0 +1,12 @@
+0.7.0: Implement a /V option to display the version of BuildVersionInfo
+	Add the executable BuildVersionInfo.exe (x86, release) in the GitHUB 
+	  release
+
+0.6.0: Automatic handling of special and private build flags
+	If the repository is dirty, add 1 to the least significant version number
+	  and set VS_FF_PRERELEASE in FILEFLAGS
+	Update FILEFLAGS in the fixed version info bloc if specialbuild or
+	  privatebuild are present in any StringFileInfo block
+	Move README and license files to the top level directory on GitHUB
+
+0.5.0: First working version
