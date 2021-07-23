@@ -33,7 +33,7 @@ displays a help message for the syntax of the command
 
 displays the version of the BuildVersionInfo program
 
-    BuildVersionInfo [/I:inifile] %S [statusfile]
+    BuildVersionInfo [/I:inifile] /S [statusfile]
 
 uses a statusfile (default version.bin) to check whether the version should
 change.
