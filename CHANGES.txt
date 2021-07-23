@@ -1,3 +1,5 @@
+0.8.1: Minor change to fix a type in the README file.
+
 0.8.0: Automatically rebuild versioninfo.rc2 when version changes
     Add a /S option to check for version changes.
 	Add a CHANGES.txt file.
