@@ -94,6 +94,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>IF EXIST $(TargetPath) (
+	$(TargetPath) /S  || DEL versioninfo.rc2
+)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Removes the versioninfo.rc2 file if the version should change</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -111,6 +119,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>IF EXIST $(TargetPath) (
+	$(TargetPath) /S  || DEL versioninfo.rc2
+)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Removes the versioninfo.rc2 file if the version should change</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -124,6 +140,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>IF EXIST $(TargetPath) (
+	$(TargetPath) /S  || DEL versioninfo.rc2
+)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Removes the versioninfo.rc2 file if the version should change</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -141,6 +165,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>IF EXIST $(TargetPath) (
+	$(TargetPath) /S  || DEL versioninfo.rc2
+)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Removes the versioninfo.rc2 file if the version should change</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="build_rc2.bat" />

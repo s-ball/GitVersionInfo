@@ -75,8 +75,8 @@ private:
 			out << L"\t\tdisplays this help message\n";
 			out << L"\t" << prog << L" /V\n";
 			out << L"\t\tdisplays the version of the program\n";
-			out << L"\t" << prog << L" [/I:inifile] /S [statusfile]";
-			out << L"\t\tchecks whether version should be computed again using statusfile (default version.bin)\n";
+			out << L"\t" << prog << L" [/I:inifile] /S [statusfile]\n";
+			out << L"\t\tchecks whether version should be computed again using statusfile (default version.bin)\n\n";
 
 			out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
 			out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
