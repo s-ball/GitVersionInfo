@@ -33,6 +33,11 @@ displays a help message for the syntax of the command
 
 displays the version of the BuildVersionInfo program
 
+    BuildVersionInfo [/I:inifile] %S [statusfile]
+
+uses a statusfile (default version.bin) to check whether the version should
+change.
+
 ### Input file structure:
 
 The input `version.ini` file is a standard `.ini` file with *section*
@@ -137,9 +142,10 @@ resource editor or resource display (right click) to add
 
 in the *Compilation directives* block (third one).
 
-Here again, you will have to manually compile you `version.ini` file each 
-time the `git` status change, because I could not find a way to do that
-automatically.
+Finally, you must add a prebuild event step to remove the versionini.rc2
+file each time the version should change. It should write:
+
+    [path\to\]BuildVersionInfo [/I:version.ini] /S [version.bin] || del versioninfo.rc2
 
 ## Contributing
 

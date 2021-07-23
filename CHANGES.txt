@@ -1,3 +1,9 @@
+0.8.0: Automatically rebuild versioninfo.rc2 when version changes
+    Add a /S option to check for version changes.
+	Add a CHANGES.txt file.
+	Add a prebuild event step to remove the rc2 file.
+	Update README file.
+
 0.7.0: Implement a /V option to display the version of BuildVersionInfo
 	Add the executable BuildVersionInfo.exe (x86, release) in the GitHUB 
 	  release
