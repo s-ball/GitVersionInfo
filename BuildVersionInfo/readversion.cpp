@@ -54,15 +54,10 @@ bool VersionBuilder::parseVersion(const wstring& tag, WORD version[4]) {
 wstring VersionBuilder::readVersion() {
 	// scan git log to find last tag
 	// scan git status to set the dirty flag
-	dirty = false;
-	wstring cmd = gitCmd + L" status --porcelain";
+	wstring cmd = gitCmd + L" status --untracked-files=no --porcelain";
 	FILE *out = _wpopen(cmd.c_str(), L"r");
-	while (NULL != fgetws(buffer, size, out)) {
-		if ((buffer[0] != L'?' && buffer[0] != L' ') || (buffer[1] != L'?' && buffer[1] != L' ')) {
-			dirty = true;
-			break;
-		}
-	}
+	dirty = (NULL != fgetws(buffer, size, out));
+	fclose(out);
 	cmd = gitCmd + L" log --format=\"%D\"";
 	out = _wpopen(cmd.c_str(), L"r");
 	wstring tag;

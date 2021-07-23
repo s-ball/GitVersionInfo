@@ -10,5 +10,5 @@ REM Else if just build an empty (but valid) file.
 IF EXIST %1 (
 	%1 %2 /I:%3 %4
 ) ELSE (
-	ECHO //EMPTY FILE > %4
+	COPY /B NUL %4
 )

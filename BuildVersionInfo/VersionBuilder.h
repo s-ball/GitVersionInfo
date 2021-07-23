@@ -239,6 +239,7 @@ public:
 	}
 
 	wstring readVersion();
+	int check_status(const wstring& statusfile);
 	bool parseVersion(const wstring& strversion, WORD version[4]);
 
 	bool getProductVersion(WORD version[4]) {

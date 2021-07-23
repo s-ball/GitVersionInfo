@@ -24,6 +24,9 @@
     <ClCompile Include="..\BuildVersionInfo\readversion.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\BuildVersionInfo\check_status.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

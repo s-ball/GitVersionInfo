@@ -170,6 +170,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="check_status.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="readversion.cpp" />
   </ItemGroup>

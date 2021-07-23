@@ -19,6 +19,7 @@ public:
 		error = -1,
 		help = 0,
 		version,
+		status,
 		run
 	} cr;
 
@@ -33,6 +34,7 @@ public:
 			break;
 		case version:
 			usage(std::wcout, true);
+		case status:
 		case run:
 			;
 		}
@@ -72,7 +74,10 @@ private:
 			out << L"Usage:\n\t" << prog << L" /H\n";
 			out << L"\t\tdisplays this help message\n";
 			out << L"\t" << prog << L" /V\n";
-			out << L"\t\tdisplays the version of the program\n\n";
+			out << L"\t\tdisplays the version of the program\n";
+			out << L"\t" << prog << L" [/I:inifile] /S [statusfile]";
+			out << L"\t\tchecks whether version should be computed again using statusfile (default version.bin)\n";
+
 			out << L"\t" << prog << L" appfilename [/I:inifile] [/O:outfile] [outfile [inifile]]\n";
 			out << L"\t\tbuilds outfile (default " << def_outfile << L") from inifile (default " << def_inifile << L")";
 		}
@@ -99,6 +104,7 @@ private:
 			prog = file.substr(pos + 1);
 		}
 		pos = 0;
+		cr = run;
 		for (wchar_t** arg = argv + 1; *arg != nullptr; arg++) {
 			if (**arg == L'/') {
 				switch (towupper((*arg)[1])) {
@@ -111,6 +117,9 @@ private:
 					break;
 				case L'O':
 					outfile = getfile(arg);
+					break;
+				case L'S':
+					cr = status;
 					break;
 				case L'V':
 					cr = version;
@@ -140,6 +149,11 @@ private:
 				}
 			}
 		}
-		cr = (app_file_name == L"") ? error : run;
+		if (cr == run && app_file_name == L"") {
+			cr = error;
+		}
+		if (cr == status && app_file_name == L"") {
+			app_file_name = L"version.bin";
+		}
 	}
 };

@@ -325,7 +325,7 @@ namespace BuildTest
 			free(tmp);
 		}
 		TEST_CLASS_CLEANUP(classTearOff) {
-			// _wremove(outfile.c_str());
+			_wremove(outfile.c_str());
 		}
 		TEST_METHOD(FixedNoProduct) {
 			VersionBuilder builder(inifile, outfile);
@@ -397,6 +397,68 @@ namespace BuildTest
 			Assert::IsTrue(ss.good());
 			std::wregex rx(L"\\s*VALUE\\s*\"CompanyName\"\\s*,\\s*\"foo\"\\s*\n$");
 			Assert::IsTrue(std::regex_match(ss.str(), rx));
+		}
+	};
+	TEST_CLASS(testCheck) {
+		wstring statusfile;
+
+		TEST_METHOD_INITIALIZE(setup) {
+			LPCWSTR temp = _wtempnam(L".", L"status");
+			statusfile = temp;
+			free((void *) temp);
+		}
+		TEST_METHOD_CLEANUP(cleanup) {
+			_wremove(statusfile.c_str());
+		}
+		TEST_METHOD(noStatus) {
+			_wremove(statusfile.c_str());
+			VersionBuilder builder(L"", L"");
+			builder.finfo.version[0] = 1;
+			int cr = builder.check_status(statusfile);
+			Assert::AreEqual(EXIT_FAILURE, cr);
+			Assert::IsTrue((bool)std::ifstream(statusfile));
+		}
+		TEST_METHOD(versionChanged) {
+			VersionBuilder builder(L"", L"");
+			builder.finfo.version[0] = 1;
+			std::ofstream out(statusfile);
+			bool dirty = false;
+			out.write((const char*)builder.finfo.version, sizeof(builder.finfo.version));
+			out.write((const char*)&dirty, sizeof(dirty));
+			out.close();
+			builder.finfo.version[2] = 1;
+			int cr = builder.check_status(statusfile);
+			builder.finfo.version[2] = 2;
+			Assert::AreEqual(EXIT_FAILURE, cr);
+			std::ifstream in(statusfile);
+			in.read((char*)builder.finfo.version, sizeof(builder.finfo.version));
+			Assert::AreEqual(1, (int) builder.finfo.version[2]);
+		}
+		TEST_METHOD(dirtyChanged) {
+			VersionBuilder builder(L"", L"");
+			builder.finfo.version[0] = 1;
+			std::ofstream out(statusfile);
+			bool dirty = true;
+			out.write((const char*)builder.finfo.version, sizeof(builder.finfo.version));
+			out.write((const char*)&dirty, sizeof(dirty));
+			out.close();
+			int cr = builder.check_status(statusfile);
+			Assert::AreEqual(EXIT_FAILURE, cr);
+			std::ifstream in(statusfile);
+			in.read((char*)builder.finfo.version, sizeof(builder.finfo.version));
+			in.read((char*)&dirty, sizeof(dirty));
+			Assert::IsFalse(dirty);
+		}
+		TEST_METHOD(nothingChanged) {
+			VersionBuilder builder(L"", L"");
+			builder.finfo.version[0] = 1;
+			std::ofstream out(statusfile);
+			bool dirty = false;
+			out.write((const char*)builder.finfo.version, sizeof(builder.finfo.version));
+			out.write((const char*)&dirty, sizeof(dirty));
+			out.close();
+			int cr = builder.check_status(statusfile);
+			Assert::AreEqual(EXIT_SUCCESS, cr);
 		}
 	};
 }
