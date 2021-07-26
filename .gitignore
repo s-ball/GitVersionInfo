@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 *.rc2
 /BuildVersionInfo/version.bin
+# OpenCppCoverage
+.opencpp*
