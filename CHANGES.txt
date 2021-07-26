@@ -1,3 +1,6 @@
+0.9.0: Replace the native test project with a Google Test one.
+    This is just a technical release
+
 0.8.1: Minor change to fix a type in the README file.
 
 0.8.0: Automatically rebuild versioninfo.rc2 when version changes
