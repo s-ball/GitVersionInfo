@@ -61,7 +61,7 @@ public:
 		bool required;
 		const wstring* def;
 	};
-	fixed_info finfo;
+	fixed_info finfo = { {0} };
 	std::vector<localized> linfo;
 
 private:
@@ -73,7 +73,7 @@ private:
 
 	wstring appfile;
 	wstring appname;
-	bool dirty;
+	bool dirty = false;
 	int size = 128;
 	LPWSTR buffer;
 	wstring vers;
@@ -254,7 +254,7 @@ public:
 	}
 
 	VersionBuilder(const wstring& inifile, const wstring& outfile, const wstring& appfile = L"app") : inifile(inifile),
-			outfile(outfile), appfile(appfile) {
+		outfile(outfile), appfile(appfile) {
 		size_t ext = appfile.rfind(L'.');
 		appname = appfile.substr(0, ext);
 		buffer = new wchar_t[size];
