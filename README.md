@@ -147,6 +147,13 @@ file each time the version should change. It should write:
 
     [path\to\]BuildVersionInfo [/I:version.ini] /S [version.bin] || del versioninfo.rc2
 
+### BEWARE:
+
+In the current versions (0.8.1 or 0.9.0), `BuildVersionInfo` can be unable to
+find the ini file if you give a relative path. Maybe I will fix that in a 
+future version, but anyway, in case of problem you should first
+try to give an absolute path for `version.ini`.
+
 ## Contributing
 
 As this project is developped on my free time, I cannot guarantee very fast feedbacks. Anyway, I shall be glad to receive issues or pull requests on GitHUB. 
